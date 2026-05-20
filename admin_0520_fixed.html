@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>賣家後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d11;--surface:#141419;--surface2:#1c1c24;--surface3:#22222e;
+  --border:#28283a;--border2:#333348;
+  --accent:#7c6af7;--pink:#f06292;--green:#4caf82;--red:#e05252;--yellow:#f5a623;
+  --text:#e8e8f4;--dim:#6a6a88;--dim2:#8888aa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+.lock-wrap{display:flex;align-items:center;justify-content:center;flex:1}
+.lock-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:40px 32px;width:320px;text-align:center}
+.lock-box h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.lock-box p{font-size:13px;color:var(--dim2);margin-bottom:22px}
+.lock-pw{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:13px;font-size:16px;color:var(--text);font-family:inherit;outline:none;text-align:center;letter-spacing:4px;margin-bottom:12px;transition:border-color .2s}
+.lock-pw:focus{border-color:var(--accent)}
+
+.topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
+.sync-label{font-size:12px;color:var(--dim2)}
+
+.app{display:none;flex:1;flex-direction:column;overflow:hidden}
+.layout{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 52px);overflow:hidden}
+
+.left-panel{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:14px 18px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0}
+.panel-body{flex:1;overflow-y:auto;padding:16px 18px}
+.panel-body::-webkit-scrollbar{width:4px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+.right-panel{display:flex;flex-direction:column;overflow:hidden}
+.right-header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surface)}
+.right-body{flex:1;overflow-y:auto;padding:16px 20px}
+.right-body::-webkit-scrollbar{width:4px}
+.right-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+.field{margin-bottom:11px}
+label.lbl{display:block;font-size:11px;color:var(--dim2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;font-weight:500}
+input,textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--accent)}
+input::placeholder{color:var(--dim)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;white-space:nowrap}
+.btn:hover{opacity:.82}
+.btn:active{transform:scale(.97)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:transparent;border:1px solid var(--border);color:var(--red);padding:5px 10px;font-size:11px;border-radius:7px}
+.btn-yellow{background:var(--yellow);color:#000}
+.btn-full{width:100%}
+
+.img-pick{width:100%;height:90px;border:1.5px dashed var(--border2);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;color:var(--dim);font-size:12px;gap:4px;transition:border-color .2s}
+.img-pick:hover{border-color:var(--accent)}
+.img-pick img{width:100%;height:100%;object-fit:cover}
+.clear-btn{margin-top:5px;background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--dim);cursor:pointer;font-family:inherit;display:none;width:100%}
+
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:11px;cursor:pointer;color:var(--dim2);transition:all .15s}
+.chip:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.sec-hd{font-size:11px;font-weight:700;color:var(--dim2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+.bank-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* BUYER CARDS */
+.buyer-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.buyer-card.active{border-color:var(--accent)}
+.buyer-card-head{padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.buyer-card-head:hover{background:var(--surface2)}
+.bcleft{display:flex;align-items:center;gap:10px}
+.bavatar{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.bname{font-size:14px;font-weight:700}
+.bmeta{font-size:11px;color:var(--dim2);margin-top:1px}
+.bcright{display:flex;align-items:center;gap:8px}
+.btotal{font-family:'Space Mono',monospace;font-size:12px;color:var(--green)}
+.chevron{color:var(--dim);font-size:11px;transition:transform .2s}
+.buyer-card.active .chevron{transform:rotate(90deg)}
+
+.buyer-card-body{display:none;border-top:1px solid var(--border)}
+.buyer-card.active .buyer-card-body{display:block}
+
+.btabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface2)}
+.btab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;color:var(--dim2);cursor:pointer;border-bottom:2px solid transparent}
+.btab.on{color:var(--accent);border-bottom-color:var(--accent);background:var(--surface)}
+.btab-content{display:none;padding:14px 16px}
+.btab-content.on{display:block}
+
+.bitem{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)}
+.bitem:last-child{border-bottom:none}
+.bthumb{width:34px;height:34px;border-radius:6px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.bthumb img{width:34px;height:34px;object-fit:cover}
+.bitem-name{flex:1;font-size:12px;font-weight:600}
+.bitem-desc{font-size:10px;color:var(--dim2);margin-top:1px}
+.bitem-price{font-family:'Space Mono',monospace;font-size:11px;color:var(--pink);flex-shrink:0}
+
+/* PAYMENT STATUS CONTROL */
+.pay-status-section{margin-bottom:14px}
+.pay-status-label{font-size:11px;color:var(--dim2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;font-weight:700}
+.pay-status-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.ps-btn{border:1.5px solid var(--border);border-radius:9px;padding:8px 6px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;transition:all .15s;background:transparent;font-family:inherit;color:var(--dim2)}
+.ps-btn:hover{border-color:var(--dim2)}
+.ps-btn.active-unpaid{background:#200a0a;border-color:var(--red);color:var(--red)}
+.ps-btn.active-partial{background:#251e08;border-color:var(--yellow);color:var(--yellow)}
+.ps-btn.active-paid{background:#0a2016;border-color:var(--green);color:var(--green)}
+
+.pay-amounts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.amt-box{background:var(--surface2);border-radius:8px;padding:8px;text-align:center}
+.amt-label{font-size:9px;color:var(--dim);text-transform:uppercase;margin-bottom:3px}
+.amt-val{font-family:'Space Mono',monospace;font-size:13px;font-weight:700}
+.amt-val.g{color:var(--green)}
+.amt-val.r{color:var(--red)}
+.amt-val.a{color:var(--accent)}
+
+.paid-input-wrap{margin-bottom:10px}
+.pay-proof-img{width:100%;max-height:150px;object-fit:contain;border-radius:8px;background:var(--surface2);cursor:pointer;margin-top:8px}
+
+/* STATUS TAGS */
+.stag{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 9px;font-size:10px;font-weight:700}
+.stag-unpaid{background:#200a0a;color:var(--red);border:1px solid #4a1a1a}
+.stag-partial{background:#251e08;color:var(--yellow);border:1px solid #4a3a10}
+.stag-paid{background:#0a2016;color:var(--green);border:1px solid #1a4a30}
+
+/* SHIPPING STATUS */
+.ship-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.ship-btn{border:1.5px solid var(--border);border-radius:9px;padding:8px 6px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;transition:all .15s;background:transparent;font-family:inherit;color:var(--dim2)}
+.ship-btn:hover{border-color:var(--dim2)}
+.ship-btn.active-ordered{background:#0a1a2a;border-color:#4a8aff;color:#4a8aff}
+.ship-btn.active-packing{background:#251e08;border-color:var(--yellow);color:var(--yellow)}
+.ship-btn.active-shipped{background:#0a2016;border-color:var(--green);color:var(--green)}
+
+.stag-ordered{background:#0a1a2a;color:#4a8aff;border:1px solid #1a3a6a}
+.stag-packing{background:#251e08;color:var(--yellow);border:1px solid #4a3a10}
+.stag-shipped{background:#0a2016;color:var(--green);border:1px solid #1a4a30}
+
+/* SHIPPING NOTE */
+.ship-note-wrap{margin-bottom:10px}
+.ship-items-summary{background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.ship-item-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px}
+.ship-item-row:last-child{border-bottom:none}
+.ship-total-row{display:flex;justify-content:space-between;margin-top:8px;font-weight:700;font-size:13px}
+
+.buyer-upload-card{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:8px}
+.bu-meta{font-size:11px;color:var(--dim2);margin-bottom:6px}
+.bu-amount{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;margin-bottom:4px}
+
+.summary-bar{display:flex;gap:6px;font-size:11px}
+.sb-item{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:4px 10px;display:flex;gap:4px;align-items:center}
+
+.empty{text-align:center;padding:28px 0;color:var(--dim);font-size:13px}
+.save-ok{font-size:12px;color:var(--green);margin-top:6px;display:none}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--green);color:#fff;padding:9px 18px;border-radius:18px;font-size:12px;font-weight:600;opacity:0;transition:all .28s;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.img-modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:999;cursor:pointer}
+.img-modal.show{display:flex}
+.img-modal img{max-width:90vw;max-height:90vh;border-radius:10px}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes up{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:up .18s ease forwards}
+</style>
+</head>
+<body>
+
+<div class="lock-wrap" id="lockWrap">
+  <div class="lock-box">
+    <h1>🔐 賣家後台</h1>
+    <p>輸入密碼登入管理</p>
+    <input class="lock-pw" type="password" id="pwInput" placeholder="密碼" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="btn btn-accent btn-full" onclick="unlock()">登入</button>
+    <p style="margin-top:10px;font-size:11px;color:var(--dim)">預設密碼：1234</p>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-title">🏪 賣家後台</div>
+    <div class="topbar-right">
+      <div class="sync-dot loading" id="syncDot"></div>
+      <div class="sync-label" id="syncLabel">載入中…</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT -->
+    <div class="left-panel">
+      <div class="panel-header">➕ 新增購買記錄</div>
+      <div class="panel-body">
+        <div class="field">
+          <label class="lbl">買家名字</label>
+          <input id="inBuyer" placeholder="輸入名字，或點選已有買家" oninput="renderChips()">
+          <div class="chips" id="buyerChips"></div>
+        </div>
+        <div class="field">
+          <label class="lbl">商品名稱</label>
+          <input id="inName" placeholder="例：金魚杏 閃卡 *10">
+        </div>
+        <div class="field">
+          <label class="lbl">備註（選填）</label>
+          <input id="inDesc" placeholder="例：絕版、九成新">
+        </div>
+        <div class="field">
+          <label class="lbl">金額（NT$）</label>
+          <input id="inPrice" type="number" placeholder="例：1200">
+        </div>
+        <div class="field">
+          <label class="lbl">商品圖片（點擊上傳 或 Ctrl+V）</label>
+          <div class="img-pick" id="imgPick" onclick="document.getElementById('imgFile').click()">
+            <span>📷</span><span>點擊上傳 或 貼上截圖</span>
+          </div>
+          <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="pickFile(this)">
+          <button class="clear-btn" id="clearImgBtn" onclick="clearImg()">✕ 清除圖片</button>
+        </div>
+        <button class="btn btn-green btn-full" id="addBtn" onclick="addEntry()">✅ 新增記錄</button>
+
+        <div class="divider"></div>
+        <div class="sec-hd">⚙️ 匯款資訊設定</div>
+        <div class="bank-grid">
+          <div class="field"><label class="lbl">銀行</label><input id="sBank" placeholder="例：玉山銀行"></div>
+          <div class="field"><label class="lbl">戶名</label><input id="sName" placeholder="例：王小明"></div>
+        </div>
+        <div class="field"><label class="lbl">帳號</label><input id="sAccount" placeholder="例：123456789012"></div>
+        <div class="field"><label class="lbl">備註（選填）</label><input id="sExtra" placeholder="例：後5碼 12345"></div>
+        <button class="btn btn-accent btn-full" onclick="saveBankInfo()">💾 儲存匯款資訊</button>
+        <div class="save-ok" id="saveOk">✓ 已儲存！</div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+      <div class="right-header">
+        <div style="font-size:13px;font-weight:700;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px" id="rightTitle">買家管理</div>
+        <div class="summary-bar" id="summaryBar"></div>
+      </div>
+      <div class="right-body" id="buyerListEl"></div>
+    </div>
+  </div>
+</div>
+
+<div class="img-modal" id="imgModal" onclick="closeModal()"><img id="modalImg" src=""></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DB_URL = 'https://my-shop-0520-default-rtdb.asia-southeast1.firebasedatabase.app';
+const PW = '1234';
+const IMGBB_KEY = '5810e2b832aa9a59aaf557d7354331db';
+
+let entries = [], payments = [], payStatuses = {}, shipStatuses = {};
+let imgB64 = '', openBuyer = null, openBuyerTab = {};
+
+async function uploadToImgBB(base64) {
+  if (!base64) return '';
+  const b64 = base64.split(',')[1];
+  const form = new FormData();
+  form.append('key', IMGBB_KEY);
+  form.append('image', b64);
+  try {
+    const res = await fetch('https://api.imgbb.com/1/upload', { method:'POST', body:form });
+    const data = await res.json();
+    return data.success ? data.data.url : base64;
+  } catch(e) { return base64; }
+}
+
+function unlock() {
+  if (document.getElementById('pwInput').value === PW) {
+    document.getElementById('lockWrap').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    loadAll();
+  } else { alert('密碼錯誤！'); }
+}
+
+async function loadAll() {
+  setSyncing(true);
+  try {
+    const [eRes, pRes, bRes, psRes, ssRes] = await Promise.all([
+      fetch(`${DB_URL}/entries.json`),
+      fetch(`${DB_URL}/payments.json`),
+      fetch(`${DB_URL}/bankInfo.json`),
+      fetch(`${DB_URL}/payStatuses.json`),
+      fetch(`${DB_URL}/shipStatuses.json`)
+    ]);
+    const eData = await eRes.json().catch(()=>null);
+    const pData = await pRes.json().catch(()=>null);
+    const bData = await bRes.json().catch(()=>null);
+    const psData = await psRes.json().catch(()=>null);
+    const ssData = await ssRes.json().catch(()=>null);
+
+    entries = eData ? Object.entries(eData).map(([id,v])=>({...v,fireId:id})) : [];
+    entries.sort((a,b)=>b.id-a.id);
+    payments = pData ? Object.entries(pData).map(([id,v])=>({...v,fireId:id})) : [];
+    payments.sort((a,b)=>b.timestamp-a.timestamp);
+    payStatuses = psData || {};
+    shipStatuses = ssData || {};
+
+    if (bData) {
+      document.getElementById('sBank').value = bData.bank||'';
+      document.getElementById('sAccount').value = bData.account||'';
+      document.getElementById('sName').value = bData.name||'';
+      document.getElementById('sExtra').value = bData.extra||'';
+    }
+    setSyncing(false);
+    renderAll();
+  } catch(e) { setSyncing(false,'載入失敗'); }
+}
+
+function setSyncing(loading, msg) {
+  document.getElementById('syncDot').classList.toggle('loading', loading);
+  document.getElementById('syncLabel').textContent = loading ? '同步中…' : (msg||'已同步 ✓');
+}
+
+// IMG
+function pickFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader(); r.onload = e => setImg(e.target.result); r.readAsDataURL(file);
+}
+function setImg(src) {
+  imgB64 = src;
+  document.getElementById('imgPick').innerHTML = `<img src="${src}" style="pointer-events:none">`;
+  document.getElementById('clearImgBtn').style.display = 'block';
+}
+function clearImg() {
+  imgB64 = '';
+  document.getElementById('imgPick').innerHTML = '<span>📷</span><span>點擊上傳 或 貼上截圖</span>';
+  document.getElementById('imgFile').value = '';
+  document.getElementById('clearImgBtn').style.display = 'none';
+}
+document.addEventListener('paste', e => {
+  if (document.getElementById('app').style.display === 'none') return;
+  for (const item of e.clipboardData.items) {
+    if (item.type.startsWith('image/')) {
+      const r = new FileReader(); r.onload = ev => setImg(ev.target.result); r.readAsDataURL(item.getAsFile()); break;
+    }
+  }
+});
+
+// CHIPS
+function renderChips() {
+  const val = document.getElementById('inBuyer').value.toLowerCase();
+  const names = [...new Set(entries.map(e=>e.buyer))];
+  const list = val ? names.filter(n=>n.toLowerCase().includes(val)) : names;
+  document.getElementById('buyerChips').innerHTML = list.map(n=>
+    `<div class="chip" onclick="document.getElementById('inBuyer').value='${esc(n)}';renderChips()">${esc(n)}</div>`
+  ).join('');
+}
+
+// ADD
+async function addEntry() {
+  const buyer=document.getElementById('inBuyer').value.trim();
+  const name=document.getElementById('inName').value.trim();
+  const desc=document.getElementById('inDesc').value.trim();
+  const price=document.getElementById('inPrice').value.trim();
+  if(!buyer){alert('請輸入買家名字');return}
+  if(!name){alert('請輸入商品名稱');return}
+  if(!price){alert('請輸入金額');return}
+  const btn=document.getElementById('addBtn');
+  btn.textContent='上傳中…';btn.disabled=true;
+  let imgUrl='';
+  if(imgB64) imgUrl=await uploadToImgBB(imgB64);
+  const entry={id:Date.now(),buyer,name,desc,price:Number(price),img:imgUrl};
+  try {
+    const res=await fetch(`${DB_URL}/entries.json`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+    const data=await res.json();
+    entry.fireId=data.name;
+    entries.unshift(entry);
+    document.getElementById('inName').value='';
+    document.getElementById('inDesc').value='';
+    document.getElementById('inPrice').value='';
+    clearImg();
+    showToast('✅ 新增成功！');
+    renderAll();
+  } catch(e){alert('新增失敗')}
+  btn.textContent='✅ 新增記錄';btn.disabled=false;
+}
+
+async function delEntry(fireId) {
+  if(!confirm('確定刪除？'))return;
+  await fetch(`${DB_URL}/entries/${fireId}.json`,{method:'DELETE'});
+  entries=entries.filter(e=>e.fireId!==fireId);
+  showToast('已刪除');renderAll();
+}
+
+// MANUAL PAY STATUS
+async function setPayStatus(buyer, status, paidAmount) {
+  const key = buyer.replace(/[^a-zA-Z0-9]/g,'_');
+  const record = { status, paidAmount: Number(paidAmount)||0, updatedAt: Date.now() };
+  try {
+    await fetch(`${DB_URL}/payStatuses/${key}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)});
+    payStatuses[key] = record;
+    showToast(`已標記：${status}`);
+    renderAll();
+  } catch(e) { showToast('❌ 儲存失敗，請重試'); }
+}
+
+// SHIPPING STATUS
+async function setShipStatus(buyer, status) {
+  const key = buyer.replace(/[^a-zA-Z0-9]/g,'_');
+  const record = { status, updatedAt: Date.now() };
+  try {
+    await fetch(`${DB_URL}/shipStatuses/${key}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)});
+    shipStatuses[key] = record;
+    showToast(`出貨狀態：${status}`);
+    renderAll();
+  } catch(e) { showToast('❌ 儲存失敗，請重試'); }
+}
+
+// BANK INFO
+async function saveBankInfo() {
+  const info={bank:document.getElementById('sBank').value.trim(),account:document.getElementById('sAccount').value.trim(),name:document.getElementById('sName').value.trim(),extra:document.getElementById('sExtra').value.trim()};
+  await fetch(`${DB_URL}/bankInfo.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(info)});
+  const ok=document.getElementById('saveOk');ok.style.display='block';
+  setTimeout(()=>ok.style.display='none',2500);
+  showToast('💾 已儲存！');
+}
+
+// RENDER
+function renderAll() { renderChips(); renderBuyerList(); }
+
+function renderBuyerList() {
+  const el=document.getElementById('buyerListEl');
+  const map={};
+  entries.forEach(e=>{if(!map[e.buyer])map[e.buyer]=[];map[e.buyer].push(e)});
+  const buyers=Object.keys(map);
+  const activeBuyers=new Set(buyers);
+
+  const totalOrder=entries.reduce((s,e)=>s+Number(e.price),0);
+  const paidBuyers=Object.entries(payStatuses).filter(([k,p])=>p.status==='已付清'&&activeBuyers.has(Object.keys(payStatuses).indexOf(k)>=0?buyer:buyer)).length;
+  const shippedBuyers=buyers.filter(b=>{ const k=b.replace(/[^a-zA-Z0-9]/g,'_'); return shipStatuses[k]&&shipStatuses[k].status==='已寄出'; }).length;
+  const packedBuyers=buyers.filter(b=>{ const k=b.replace(/[^a-zA-Z0-9]/g,'_'); return shipStatuses[k]&&shipStatuses[k].status==='已整理'; }).length;
+
+  document.getElementById('rightTitle').textContent=`買家管理（${buyers.length} 人）`;
+  document.getElementById('summaryBar').innerHTML=`
+    <div class="sb-item"><span style="color:var(--accent)">訂單 NT$${totalOrder.toLocaleString()}</span></div>
+    <div class="sb-item"><span style="color:var(--green)">🚚 已寄出 ${shippedBuyers}</span></div>
+    <div class="sb-item"><span style="color:var(--yellow)">📦 已整理 ${packedBuyers}</span></div>
+    <div class="sb-item"><span style="color:#4a8aff)">📋 待處理 ${buyers.length-shippedBuyers-packedBuyers}</span></div>`;
+
+  if(!buyers.length){el.innerHTML='<div class="empty">還沒有買家記錄</div>';return}
+
+  el.innerHTML=buyers.map(buyer=>{
+    const items=map[buyer];
+    const orderTotal=items.reduce((s,i)=>s+Number(i.price),0);
+    const key=buyer.replace(/[^a-zA-Z0-9]/g,'_');
+    const ps=payStatuses[key]||{status:'未付款',paidAmount:0};
+    const ss=shipStatuses[key]||{status:'已下單賣貨'};
+    const buyerPayments=payments.filter(p=>p.buyer===buyer);
+    const isOpen=openBuyer===buyer;
+    const tab=openBuyerTab[buyer]||'items';
+
+    // pay status tag
+    let stagClass='stag-unpaid', stagText='❌ 未付款';
+    if(ps.status==='已付清'){stagClass='stag-paid';stagText='✅ 已付清';}
+    else if(ps.status==='部分付款'){stagClass='stag-partial';stagText='⚠️ 部分付款';}
+
+    // ship status tag
+    let sshipClass='stag-ordered', sshipText='📋 已下單賣貨';
+    if(ss.status==='已整理'){sshipClass='stag-packing';sshipText='📦 已整理';}
+    else if(ss.status==='已寄出'){sshipClass='stag-shipped';sshipText='🚚 已寄出';}
+
+    const unpaid=Math.max(0,orderTotal-(ps.paidAmount||0));
+
+    let itemsHtml=items.map(e=>`
+      <div class="bitem">
+        <div class="bthumb">${e.img?`<img src="${e.img}">`:'📦'}</div>
+        <div style="flex:1;min-width:0">
+          <div class="bitem-name">${esc(e.name)}</div>
+          ${e.desc?`<div class="bitem-desc">${esc(e.desc)}</div>`:''}
+        </div>
+        <div class="bitem-price">NT$${Number(e.price).toLocaleString()}</div>
+        <button class="btn btn-red" style="margin-left:6px" onclick="delEntry('${e.fireId}');event.stopPropagation()">刪</button>
+      </div>`).join('');
+
+    // payment control
+    let payHtml=`<div class="pay-status-section">
+      <div class="pay-status-label">付款狀態（手動標記）</div>
+      <div class="pay-amounts-row">
+        <div class="amt-box"><div class="amt-label">訂單</div><div class="amt-val a">NT$${orderTotal.toLocaleString()}</div></div>
+        <div class="amt-box"><div class="amt-label">已付</div><div class="amt-val g">NT$${(ps.paidAmount||0).toLocaleString()}</div></div>
+        <div class="amt-box"><div class="amt-label">待付</div><div class="amt-val r">NT$${unpaid.toLocaleString()}</div></div>
+      </div>
+      <div class="field"><label class="lbl">已收到金額（NT$）</label>
+        <input type="number" id="paidAmt-${key}" placeholder="輸入實際收到金額" value="${ps.paidAmount||''}">
+      </div>
+      <div class="pay-status-btns">
+        <button class="ps-btn${ps.status==='未付款'?' active-unpaid':''}" onclick="setPayStatus('${esc(buyer)}','未付款',document.getElementById('paidAmt-${key}').value)">❌ 未付款</button>
+        <button class="ps-btn${ps.status==='部分付款'?' active-partial':''}" onclick="setPayStatus('${esc(buyer)}','部分付款',document.getElementById('paidAmt-${key}').value)">⚠️ 部分付款</button>
+        <button class="ps-btn${ps.status==='已付清'?' active-paid':''}" onclick="setPayStatus('${esc(buyer)}','已付清',document.getElementById('paidAmt-${key}').value)">✅ 已付清</button>
+      </div>
+    </div>`;
+
+    // buyer uploads
+    if(buyerPayments.length){
+      payHtml+=`<div style="font-size:11px;color:var(--dim2);text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:8px">買家上傳的付款截圖</div>`;
+      payHtml+=buyerPayments.map(p=>{
+        const date=new Date(p.timestamp).toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return `<div class="buyer-upload-card">
+          <div class="bu-meta">${esc(p.method)} · ${date}</div>
+          <div class="bu-amount">NT$ ${Number(p.amount).toLocaleString()}</div>
+          ${p.img?`<img class="pay-proof-img" src="${p.img}" onclick="openModal('${p.fireId}')" title="點擊放大">`:''}
+        </div>`;
+      }).join('');
+    }
+
+    return `<div class="buyer-card${isOpen?' active':''}" >
+      <div class="buyer-card-head" onclick="toggleBuyer('${esc(buyer)}')">
+        <div class="bcleft">
+          <div class="bavatar">${buyer.charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="bname">${esc(buyer)} <span class="stag ${stagClass}">${stagText}</span> <span class="stag ${sshipClass}">${sshipText}</span></div>
+            <div class="bmeta">${items.length} 件・NT$${orderTotal.toLocaleString()}</div>
+          </div>
+        </div>
+        <div class="bcright">
+          <span class="chevron">▶</span>
+        </div>
+      </div>
+      ${isOpen?`<div class="buyer-card-body">
+        <div class="btabs">
+          <div class="btab${tab==='items'?' on':''}" onclick="switchBuyerTab('${esc(buyer)}','items');event.stopPropagation()">📦 商品（${items.length}）</div>
+          <div class="btab${tab==='pay'?' on':''}" onclick="switchBuyerTab('${esc(buyer)}','pay');event.stopPropagation()">💳 付款管理</div>
+          <div class="btab${tab==='ship'?' on':''}" onclick="switchBuyerTab('${esc(buyer)}','ship');event.stopPropagation()">🚚 出貨狀態</div>
+        </div>
+        <div class="btab-content${tab==='items'?' on':''}">
+          ${itemsHtml}
+          <div style="text-align:right;margin-top:8px;font-family:'Space Mono',monospace;font-size:12px;color:var(--green)">合計 NT$${orderTotal.toLocaleString()}</div>
+        </div>
+        <div class="btab-content${tab==='pay'?' on':''}">
+          ${payHtml}
+        </div>
+        <div class="btab-content${tab==='ship'?' on':''}">
+          <div class="ship-items-summary">
+            <div style="font-size:11px;color:var(--dim2);text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:8px">📋 訂單摘要</div>
+            ${items.map(e=>`<div class="ship-item-row"><span>${esc(e.name)}${e.desc?` <span style="color:var(--dim);font-size:10px">(${esc(e.desc)})</span>`:''}</span><span style="font-family:'Space Mono',monospace;color:var(--pink)">NT$${Number(e.price).toLocaleString()}</span></div>`).join('')}
+            <div class="ship-total-row"><span style="color:var(--dim2)">訂單總額</span><span style="font-family:'Space Mono',monospace;color:var(--accent)">NT$${orderTotal.toLocaleString()}</span></div>
+            <div class="ship-total-row"><span style="color:var(--dim2)">已付金額</span><span style="font-family:'Space Mono',monospace;color:var(--green)">NT$${(ps.paidAmount||0).toLocaleString()}</span></div>
+            <div class="ship-total-row"><span style="color:var(--dim2)">待付金額</span><span style="font-family:'Space Mono',monospace;color:var(--red)">NT$${unpaid.toLocaleString()}</span></div>
+          </div>
+          <div style="font-size:11px;color:var(--dim2);text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:8px">出貨狀態</div>
+          <div class="ship-btns">
+            <button class="ship-btn${ss.status==='已下單賣貨'?' active-ordered':''}" onclick="setShipStatus('${esc(buyer)}','已下單賣貨');event.stopPropagation()">📋 已下單賣貨</button>
+            <button class="ship-btn${ss.status==='已整理'?' active-packing':''}" onclick="setShipStatus('${esc(buyer)}','已整理');event.stopPropagation()">📦 已整理</button>
+            <button class="ship-btn${ss.status==='已寄出'?' active-shipped':''}" onclick="setShipStatus('${esc(buyer)}','已寄出');event.stopPropagation()">🚚 已寄出</button>
+          </div>
+        </div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function toggleBuyer(buyer){openBuyer=openBuyer===buyer?null:buyer;renderBuyerList()}
+function switchBuyerTab(buyer,tab){openBuyerTab[buyer]=tab;renderBuyerList()}
+
+function openModal(fireId){
+  const p=payments.find(p=>p.fireId===fireId);
+  if(!p||!p.img)return;
+  document.getElementById('modalImg').src=p.img;
+  document.getElementById('imgModal').classList.add('show');
+}
+function closeModal(){document.getElementById('imgModal').classList.remove('show')}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+</script>
+</body>
+</html>
